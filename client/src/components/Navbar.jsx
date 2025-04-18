@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import { Button } from "./ui/button";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -162,15 +163,15 @@ const Navbar = () => {
           Contact
         </NavLink>
         {!user ? (
-          <button
+          <Button
             onClick={() => {
               setOpen(false);
               setShowUserLogin(true);
             }}
-            className="cursor-pointer px-6 py-2 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm"
+            className="cursor-pointer px-6 py-2 hover:bg-primary-dull transition text-white rounded-full text-sm"
           >
             Login
-          </button>
+          </Button>
         ) : (
           <button
             onClick={logout}
