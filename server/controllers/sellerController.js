@@ -31,7 +31,6 @@ export const sellerLogin = async (req, res) => {
 };
 
 // Check SellerAuth : /api/seller/is-auth
-// Check SellerAuth : /api/seller/is-auth
 export const isSellerAuth = async (req, res) => {
   try {
     return res.json({ success: true });
