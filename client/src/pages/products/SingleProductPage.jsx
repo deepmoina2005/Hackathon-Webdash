@@ -7,17 +7,8 @@ import { Badge } from "@/components/ui/badge"; // Assuming you have a custom Bad
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Tabs UI component
 import AddToCartButton from "@/components/add-to-cart-button"; // Assuming you have an AddToCartButton component
 import CarbonFootprintDisplay from "@/components/carbon-footprint-display"; // Assuming you have a CarbonFootprintDisplay component
-
+import { getProductById } from "../../../lib/products.ts";
 // Dummy API call function - Replace with actual API or database logic
-const getProductById = async (id) => {
-  try {
-    const response = await fetch(`/api/product-all/${id}`);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return null; // Return null in case of an error
-  }
-};
 
 const SingleProductPage = () => {
   const { id } = useParams(); // Get the product ID from the URL

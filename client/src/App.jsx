@@ -21,7 +21,7 @@ import Loading from "./components/Loading";
 import DashboardPage from "./pages/dashboard/ProfilePage";
 import AllProductsPage from "./pages/products/AllProductPage";
 import SingleProductPage from "./pages/products/SingleProductPage";
-
+import { CartProvider} from "./components/cart-provider"
 const App = () => {
   const isSellerPath = useLocation().pathname.includes("seller");
   const {isSeller,showUserLogin} = useAppContext();
@@ -34,6 +34,7 @@ const App = () => {
       <div
         className={`${isSellerPath ? "" : " px-6 md:px-16 lg:px-24 xl:px-32"}`}
       >
+        <CartProvider>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/profile-dasboard" element={<DashboardPage />} />
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="orders" element={<Orders/>}/>
           </Route>
           </Routes>
+          </CartProvider>
       </div>
       {!isSellerPath && <Footer />}
     </div>
