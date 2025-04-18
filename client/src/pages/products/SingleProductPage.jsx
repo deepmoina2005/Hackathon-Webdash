@@ -39,7 +39,7 @@ const SingleProductPage = () => {
     );
   }
 
-  return (
+  return(
     <div className="container px-4 py-8 md:px-6 md:py-12">
       <Link
         to="/products"
@@ -48,11 +48,11 @@ const SingleProductPage = () => {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Products
       </Link>
-
+  
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-        {/* Product Images */}
+        {/* Product Images - Fixed consistent height and alignment */}
         <div className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
             <img
               src={product.image || "/placeholder.svg"}
               alt={product.name}
@@ -61,7 +61,7 @@ const SingleProductPage = () => {
           </div>
           <div className="grid grid-cols-4 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="relative aspect-square overflow-hidden rounded-md bg-muted">
+              <div key={i} className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
                 <img
                   src={product.image || "/placeholder.svg"}
                   alt={`${product.name} thumbnail ${i}`}
@@ -71,7 +71,7 @@ const SingleProductPage = () => {
             ))}
           </div>
         </div>
-
+  
         {/* Product Details */}
         <div className="space-y-6">
           <div>
@@ -99,20 +99,20 @@ const SingleProductPage = () => {
               )}
             </div>
           </div>
-
+  
           <CarbonFootprintDisplay carbonSaved={product.carbonFootprint} />
-
+  
           <p className="text-muted-foreground">{product.description}</p>
-
+  
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Button className="bg-green-600 hover:bg-green-700 flex-1">Buy Now</Button>
               <AddToCartButton product={product} />
             </div>
           </div>
-
+  
           <Separator />
-
+  
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[{ icon: Truck, title: "Free Shipping", desc: "On orders over $50" },
               { icon: ShieldCheck, title: "Quality Guarantee", desc: "Durable & sustainable" },
@@ -125,9 +125,9 @@ const SingleProductPage = () => {
                 </div>
               ))}
           </div>
-
+  
           <Separator />
-
+  
           <Tabs defaultValue="details">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details">Details</TabsTrigger>
@@ -149,6 +149,16 @@ const SingleProductPage = () => {
                 This product is made from {product.materialType.toLowerCase()} that has been carefully sourced and
                 processed to minimize environmental impact.
               </p>
+              <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded-md text-sm">
+                <h4 className="font-medium text-green-800 dark:text-green-300 mb-1">Material Journey</h4>
+                <p className="text-green-700 dark:text-green-400">
+                  {product.materialType === "Recycled Plastic"
+                    ? "Collected from ocean waste, cleaned, processed, and transformed into a new product."
+                    : product.materialType === "Upcycled Denim"
+                      ? "Made from post-consumer denim that would otherwise end up in landfills."
+                      : "Sourced from sustainable suppliers committed to environmental responsibility."}
+                </p>
+              </div>
             </TabsContent>
             <TabsContent value="impact" className="space-y-4 pt-4">
               <h3 className="font-medium">Environmental Impact</h3>
@@ -158,6 +168,27 @@ const SingleProductPage = () => {
                     <span className="text-sm font-medium">CO₂ Saved</span>
                     <span className="text-sm font-bold text-green-700 dark:text-green-300">
                       {product.carbonFootprint} kg
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-green-700 dark:text-green-400">
+                    Equivalent to {(product.carbonFootprint * 30).toFixed(1)} smartphone charges
+                  </div>
+                </div>
+  
+                <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Water Saved</span>
+                    <span className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                      {(product.carbonFootprint * 10).toFixed(1)} liters
+                    </span>
+                  </div>
+                </div>
+  
+                <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-md">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Waste Diverted</span>
+                    <span className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                      {(product.carbonFootprint * 0.5).toFixed(1)} kg
                     </span>
                   </div>
                 </div>
