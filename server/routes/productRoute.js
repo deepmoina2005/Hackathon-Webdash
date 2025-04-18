@@ -1,13 +1,30 @@
-import express from 'express'
-import { upload } from '../config/multer.js';
-import authSeller from '../middleware/authSeller.js';
-import { addProduct, changeStock, productById, productList } from '../controllers/productController.js';
+import express from 'express';
+import {
+    getAllProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+} from '../controllers/productController.js';
 
-const productRouter = express.Router();
+const router = express.Router();
 
-productRouter.post('/add', upload.array(["images"]), authSeller, addProduct);
-productRouter.get('/list', productList);
-productRouter.get('/id', productById);
-productRouter.post('/stock', authSeller, changeStock);
+// Public routes
+router.route('/')
+    .get(getAllProducts);
 
-export default productRouter;
+router.route('/:id')
+    .get(getProductById);
+
+// Admin routes
+router.use((req, res, next) => { /* your admin auth middleware */ next() });
+
+router.route('/')
+    .post(createProduct);
+
+router.route('/:id')
+    .put(updateProduct)
+    .delete(deleteProduct);
+
+// Make sure this line exists at the end
+export default router;
