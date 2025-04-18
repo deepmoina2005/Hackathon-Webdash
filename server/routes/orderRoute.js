@@ -6,7 +6,7 @@ import {
     getAllOrders,
     updateOrderStatus,
 } from '../controllers/orderController.js';
-// import { protect, admin, checkOrderOwnership } from '../middleware/authMiddleware.js';
+import { protect, admin, checkOrderOwnership } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -16,12 +16,12 @@ const router = express.Router();
 // Public routes (none) -> All protected
 
 // Protected routes
-router.post('/', /*protect,*/ createOrder);
-router.get('/myorders', /*protect,*/ getMyOrders);
-router.get('/:id', /*protect, checkOrderOwnership,*/ getOrderById);
+router.post('/', protect, createOrder);
+router.get('/myorders', protect, getMyOrders);
+router.get('/:id', protect, checkOrderOwnership, getOrderById);
 
 // Admin-only routes
-router.get('/', /*protect, admin,*/ getAllOrders);
-router.put('/:id/status', /*protect, admin,*/ updateOrderStatus);
+router.get('/', protect, admin, getAllOrders);
+router.put('/:id/status', protect, admin, updateOrderStatus);
 
 export default router;
