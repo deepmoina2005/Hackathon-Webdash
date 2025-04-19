@@ -8,6 +8,7 @@ import {
     addUserAddress,
     updateUserAddress,
     deleteUserAddress,
+    authUser,
 } from '../controllers/userController.js';
 import { protect, admin, checkOwnership } from '../middleware/authMiddleware.js'; // Assume you have these middleware
 
@@ -17,7 +18,8 @@ const router = express.Router();
 router.route('/')
     .get(protect, admin, getAllUsers) // Uncomment middleware when implemented
     .post(createUser);
-
+router.route('/login')
+    .post(authUser);
 router.route('/:id')
     .get(protect, checkOwnership, getUserById) // Example ownership check
     .put(protect, checkOwnership, updateUser)

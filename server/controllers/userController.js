@@ -1,6 +1,8 @@
 import asyncHandler from 'express-async-handler';
 import { User } from '../models/user.js'; // Adjust path as needed
 import mongoose from 'mongoose';
+import { generateToken } from '../middleware/authMiddleware.js';
+import bcrypt from 'bcryptjs';
 
 const getAllUsers = asyncHandler(async (req, res) => {
     // TODO: Add pagination, filtering, sorting options from req.query
@@ -39,11 +41,12 @@ const createUser = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error('User already exists with this email');
     }
-
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     const user = await User.create({
         name,
         email,
-        passwordHash: password, // !! REPLACE with hashedPassword !!
+        passwordHash: hashedPassword, // !! REPLACE with hashedPassword !!
         addresses: addresses || [], // Ensure addresses is at least an empty array
         monthlyCarbonGoal,
         joinedAt: new Date() // Set join date
@@ -51,17 +54,44 @@ const createUser = asyncHandler(async (req, res) => {
     });
 
     if (user) {
-        // Don't send password hash back
-        const userResponse = user.toObject();
-        delete userResponse.passwordHash;
-
-        // TODO: Generate JWT token for login upon registration
-
-        res.status(201).json({ status: 'success', data: userResponse });
+      res.status(201).json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          monthlyCarbonGoal: user.monthlyCarbonGoal,
+          token: generateToken(user._id)
+      });
     } else {
         res.status(400);
         throw new Error('Invalid user data');
     }
+});
+
+const authUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+
+  // Check for email and password
+  if (!email || !password) {
+      res.status(400);
+      throw new Error('Please provide email and password');
+  }
+
+  // Find user
+  const user = await User.findOne({ email });
+
+  // Check password match
+  if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      res.json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          monthlyCarbonGoal: user.monthlyCarbonGoal,
+          token: generateToken(user._id)
+      });
+  } else {
+      res.status(401);
+      throw new Error('Invalid email or password');
+  }
 });
 
 const updateUser = asyncHandler(async (req, res) => {
@@ -212,6 +242,7 @@ export {
     getAllUsers,
     getUserById,
     createUser,
+    authUser,
     updateUser,
     deleteUser,
     addUserAddress,
