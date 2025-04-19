@@ -1,112 +1,251 @@
-import User from "../models/user.js";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import asyncHandler from 'express-async-handler';
+import { User } from '../models/user.js'; // Adjust path as needed
+import mongoose from 'mongoose';
+import { generateToken } from '../middleware/authMiddleware.js';
+import bcrypt from 'bcryptjs';
 
-// Register User : /api/user/register
-export const register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+const getAllUsers = asyncHandler(async (req, res) => {
+    // TODO: Add pagination, filtering, sorting options from req.query
+    const users = await User.find({}).select('-passwordHash'); // Exclude password hash
+    res.status(200).json({ status: 'success', count: users.length, data: users });
+});
 
-    if (!name || !email || !password) {
-      return res.json({ success: false, message: "Missing Details" });
+const getUserById = asyncHandler(async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400);
+        throw new Error('Invalid user ID format');
     }
 
-    const existingUser = await User.findOne({ email });
+    const user = await User.findById(req.params.id).select('-passwordHash');
 
-    if (existingUser)
-      return res.json({ success: false, message: "User already exists" });
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    // TODO: Check authorization if not admin (user can get own profile)
+    res.status(200).json({ status: 'success', data: user });
+});
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+const createUser = asyncHandler(async (req, res) => {
+    const { name, email, password, addresses, monthlyCarbonGoal } = req.body;
 
-    const user = await User.create({ name, email, password: hashedPassword });
+    // Basic validation
+    if (!name || !email || !password) {
+        res.status(400);
+        throw new Error('Please provide name, email, and password');
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
+    // Check if user exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        res.status(400);
+        throw new Error('User already exists with this email');
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.create({
+        name,
+        email,
+        passwordHash: hashedPassword, // !! REPLACE with hashedPassword !!
+        addresses: addresses || [], // Ensure addresses is at least an empty array
+        monthlyCarbonGoal,
+        joinedAt: new Date() // Set join date
+        // createdAt/updatedAt are handled by timestamps: true
     });
 
-    res.cookie("token", token, {
-      httpOnly: true, // Prevent javascript to access cookie
-      secure: process.env.NODE_ENV === "production", // Use Swcure cookie in production
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // CSRF protection
-      maxAge: 7 * 24 * 60 * 60 * 1000, // Cookie expiration time
-    });
-
-    return res.json({
-      success: true,
-      user: { email: user.email, name: user.name },
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.json({ success: false, message: error.message });
-  }
-};
-
-// Login User : /api/user/login
-
-export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password)
-      return res.json({
-        success: false,
-        message: "Email and Password Required",
+    if (user) {
+      res.status(201).json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          monthlyCarbonGoal: user.monthlyCarbonGoal,
+          token: generateToken(user._id)
       });
+    } else {
+        res.status(400);
+        throw new Error('Invalid user data');
+    }
+});
 
-    const user = await User.findOne({ email });
+const authUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
-    if (!user)
-      return res.json({ success: false, message: "Invalid email and pasword" });
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch)
-      return res.json({ success: false, message: "Invalid email and pasword" });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.json({
-      success: true,
-      user: { email: user.email, name: user.name },
-    });
-  } catch (error) {
-    console.log(error.message);
-    return res.json({ success: false, message: error.message });
+  // Check for email and password
+  if (!email || !password) {
+      res.status(400);
+      throw new Error('Please provide email and password');
   }
-};
 
-// Check Auth : /api/user/is-auth
-export const isAuth = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const user = await User.findById(userId).select("-password");
-    return res.json({ success: true, user });
-  } catch (error) {
-    console.log(error.message);
-    return res.json({ success: false, message: error.message });
-  }
-};
+  // Find user
+  const user = await User.findOne({ email });
 
-// Logout User: /api/user/logout
-export const logout = async (req, res) => {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict"
-    });
-    return res.json({success:true, message:"Logged Out"})
-  } catch (error) {
-    console.log(error.message);
-    return res.json({ success: false, message: error.message });
+  // Check password match
+  if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      res.json({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          monthlyCarbonGoal: user.monthlyCarbonGoal,
+          token: generateToken(user._id)
+      });
+  } else {
+      res.status(401);
+      throw new Error('Invalid email or password');
   }
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400);
+        throw new Error('Invalid user ID format');
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // TODO: Check authorization (is user updating own profile or is admin?)
+
+    // Prevent password updates through this route - use a dedicated password change route
+    const { passwordHash, email, ...updateData } = req.body; // Exclude passwordHash and potentially email
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.params.id,
+        updateData,
+        { new: true, runValidators: true } // Return updated doc, run schema validators
+    ).select('-passwordHash');
+
+    if (!updatedUser) {
+        // Should not happen if user was found initially, but good practice
+        res.status(404);
+        throw new Error('User not found after update attempt');
+    }
+
+    res.status(200).json({ status: 'success', data: updatedUser });
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400);
+        throw new Error('Invalid user ID format');
+    }
+
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    // TODO: Consider implications - delete related data? Mark as inactive instead?
+    // Cascade deletes are not automatic in MongoDB, handle manually if needed.
+    // e.g., delete orders, etc. (or handle via model hooks if appropriate)
+
+    await User.findByIdAndDelete(req.params.id);
+
+    res.status(204).send(); // No Content
+});
+
+// --- Address Management ---
+
+const addUserAddress = asyncHandler(async (req, res) => {
+     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        res.status(400); throw new Error('Invalid user ID format');
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+        res.status(404); throw new Error('User not found');
+    }
+    // TODO: Authorization check
+
+    const { addressLine1, city, stateProvince, postalCode, country, ...rest } = req.body;
+    if (!addressLine1 || !city || !stateProvince || !postalCode || !country) {
+         res.status(400); throw new Error('Missing required address fields');
+    }
+
+    const newAddress = { addressLine1, city, stateProvince, postalCode, country, ...rest };
+
+    // If setting default, unset other defaults
+    if (newAddress.isDefaultShipping) {
+        user.addresses.forEach(addr => addr.isDefaultShipping = false);
+    }
+    if (newAddress.isDefaultBilling) {
+        user.addresses.forEach(addr => addr.isDefaultBilling = false);
+    }
+
+    user.addresses.push(newAddress);
+    await user.save();
+
+    res.status(201).json({ status: 'success', data: user.addresses });
+});
+
+
+const updateUserAddress = asyncHandler(async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(req.params.userId) || !mongoose.Types.ObjectId.isValid(req.params.addressId)) {
+        res.status(400); throw new Error('Invalid ID format');
+    }
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+        res.status(404); throw new Error('User not found');
+    }
+    // TODO: Authorization check
+
+    const address = user.addresses.id(req.params.addressId);
+    if (!address) {
+        res.status(404); throw new Error('Address not found');
+    }
+
+    // If setting default, unset other defaults first
+    if (req.body.isDefaultShipping === true) {
+        user.addresses.forEach(addr => { if(addr.id !== req.params.addressId) addr.isDefaultShipping = false; });
+    }
+    if (req.body.isDefaultBilling === true) {
+        user.addresses.forEach(addr => { if(addr.id !== req.params.addressId) addr.isDefaultBilling = false; });
+    }
+
+    // Update fields
+    Object.assign(address, req.body);
+
+    await user.save();
+    res.status(200).json({ status: 'success', data: address });
+});
+
+// @desc    Delete user address
+// @route   DELETE /api/users/:userId/addresses/:addressId
+// @access  Private/Owner
+const deleteUserAddress = asyncHandler(async (req, res) => {
+     if (!mongoose.Types.ObjectId.isValid(req.params.userId) || !mongoose.Types.ObjectId.isValid(req.params.addressId)) {
+        res.status(400); throw new Error('Invalid ID format');
+    }
+    const user = await User.findById(req.params.userId);
+     if (!user) {
+        res.status(404); throw new Error('User not found');
+    }
+    // TODO: Authorization check
+
+    const address = user.addresses.id(req.params.addressId);
+    if (!address) {
+        res.status(404); throw new Error('Address not found');
+    }
+
+    address.remove(); // Mongoose subdocument remove method
+    await user.save();
+
+    res.status(204).send();
+});
+
+
+export {
+    getAllUsers,
+    getUserById,
+    createUser,
+    authUser,
+    updateUser,
+    deleteUser,
+    addUserAddress,
+    updateUserAddress,
+    deleteUserAddress,
 };

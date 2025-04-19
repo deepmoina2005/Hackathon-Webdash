@@ -1,12 +1,36 @@
-import express from 'express'
-import { isAuth, login, logout, register } from '../controllers/userController.js';
-import authUser from '../middleware/authUser.js';
+import express from 'express';
+import {
+    getAllUsers,
+    getUserById,
+    createUser,
+    updateUser,
+    deleteUser,
+    addUserAddress,
+    updateUserAddress,
+    deleteUserAddress,
+    authUser,
+} from '../controllers/userController.js';
+import { protect, admin, checkOwnership } from '../middleware/authMiddleware.js'; // Assume you have these middleware
 
-const userRouter = express.Router();
+const router = express.Router();
 
-userRouter.post('/register',register)
-userRouter.post('/login',login)
-userRouter.get('/is-auth', authUser, isAuth)
-userRouter.get('/logout', authUser, logout)
+// Main User Routes
+router.route('/')
+    .get(protect, admin, getAllUsers) // Uncomment middleware when implemented
+    .post(createUser);
+router.route('/login')
+    .post(authUser);
+router.route('/:id')
+    .get(protect, checkOwnership, getUserById) // Example ownership check
+    .put(protect, checkOwnership, updateUser)
+    .delete(protect, admin, deleteUser);
 
-export default userRouter;
+// Address Management Routes
+router.route('/:userId/addresses')
+    .post(protect, checkOwnership, addUserAddress);
+
+router.route('/:userId/addresses/:addressId')
+    .put(protect, checkOwnership, updateUserAddress)
+    .delete(protect, checkOwnership, deleteUserAddress);
+
+export default router;
