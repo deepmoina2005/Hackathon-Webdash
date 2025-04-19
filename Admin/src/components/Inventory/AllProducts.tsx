@@ -209,7 +209,7 @@ export default function AllProducts() {
               <TableRow>
                 <TableCell isHeader className="px-4 py-3">Product Image</TableCell>
                 <TableCell isHeader className="px-4 py-3">Product Name</TableCell>
-                <TableCell isHeader className="px-4 py-3">Barcode</TableCell>
+                <TableCell isHeader className="px-4 py-3">Types</TableCell>
                 <TableCell isHeader className="px-4 py-3">Quantity</TableCell>
                 <TableCell isHeader className="px-4 py-3">Status</TableCell>
                 <TableCell isHeader className="px-4 py-3">Actions</TableCell>

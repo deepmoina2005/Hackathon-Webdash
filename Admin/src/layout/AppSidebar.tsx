@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   LogOut,
   NotebookPen,
-  ScrollText,
   Settings,
   ShoppingBasketIcon,
   ShoppingCart,
@@ -26,16 +25,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { icon: <LayoutDashboard />, name: "Dashboard", path: "/" },
-
   { icon: <ShoppingCart />, name: "Add Product", path: "/add-product" },
+  { icon: <ShoppingCart />, name: "Orders", path: "/orders" },
   { icon: <ShoppingBasketIcon />, name: "All Product", path: "/all-products" },
-
-  {
-    icon: <Boxes />,
-    name: "Categories",
-    path: "/categories",
-  },
-
+  { icon: <Boxes />, name: "Categories", path: "/category" },
+  { icon: <Boxes />, name: "Units", path: "/unit" },
   { icon: <Calendar />, name: "Calendar", path: "/calendar" },
   { icon: <NotebookPen />, name: "Reports", path: "/reports" },
   { icon: <Settings />, name: "Settings", path: "/settings" },

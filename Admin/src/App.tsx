@@ -22,13 +22,11 @@ import NewSales from "./pages/Sales/NewSales";
 import SalesHistory from "./pages/Sales/SalesHistory";
 import AllSupliers from "./pages/Supliers/AllSupliers";
 import AddSupliers from "./pages/Supliers/AddSupliers";
-import AddCategory from "./pages/Categories/AddCategory";
-import AllCategories from "./pages/Categories/AllCategories";
+import AllCategories from "./pages/Categories/AllCategoriesPage";
 import Reports from "./pages/Reports";
 import PurchaseHistory from "./pages/Purchase/PurchaseHistory";
 import AddPurchase from "./pages/Purchase/AddPurchase";
 import Settings from "./pages/Settings";
-import AddUnits from "./pages/Units/AddUnits";
 import AllUnits from "./pages/Units/AllUnits";
 import Invoice from "./pages/Invoice";
 
@@ -62,10 +60,8 @@ export default function App() {
             <Route path="/all-purchase" element={<PurchaseHistory/>} />
             <Route path="/all-supliers" element={<AllSupliers/>} />
             <Route path="/add-supliers" element={<AddSupliers/>} />
-            <Route path="/all-categories" element={<AllCategories/>} />
-            <Route path="/add-category" element={<AddCategory/>} />
-            <Route path="/add-unit" element={<AddUnits/>} />
-            <Route path="/all-units" element={<AllUnits/>} />
+            <Route path="/category" element={<AllCategories/>} />
+            <Route path="/unit" element={<AllUnits/>} />
             <Route path="/reports" element={<Reports/>} />
             <Route path="/invoice" element={<Invoice/>}/>
           </Route>
